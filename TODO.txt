@@ -1,0 +1,1 @@
+- Add error check to tournament selection
