@@ -241,7 +241,7 @@ class AntColonyOptimization():
 
 if __name__ == '__main__':
     X = np.random.rand(30,2)
-    ACO = AntColonyOptimization(X=X, N= 40, verbatim=True)
+    ACO = AntColonyOptimization(X=X, N= 40, mode="MMAS", verbatim=True)
     ACO.fit(100)
     ACO.plot_tsp()
 

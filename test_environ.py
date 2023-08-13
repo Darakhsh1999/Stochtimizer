@@ -33,17 +33,3 @@ import numpy as np
 #print(fitness.shape)
 #print(fitness2)
 #print(fitness2.shape)
-
-x = np.arange(5)
-y = 3*np.sin(x)
-import matplotlib.pyplot as plt
-
-plt.plot(x,y)
-for i in range(5):
-    if i == 4: break
-    x_arrow = (x[i]+x[i+1])/2
-    y_arrow = (y[i]+y[i+1])/2
-    dx_arrow = (x[i+1]-x[i])/4
-    dy_arrow = (y[i+1]-y[i])/4
-    plt.arrow(x_arrow,y_arrow, dx_arrow, dy_arrow, width=0.01)
-plt.show()
