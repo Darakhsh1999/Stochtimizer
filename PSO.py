@@ -1,7 +1,7 @@
 import numpy as np
-import types
+import matplotlib.pyplot as plt
 
-class PSO():
+class ParticleSwarmOptimization():
 
     '''
     Particle Swarm Optimization (PSO)
@@ -12,11 +12,12 @@ class PSO():
       
     def __init__(
         self,
-        objective_fn,
+        object_fn,
         x_min,
         x_max,
-        n_individuals=30,
-        inertia=1.4,
+        N=30,
+        W=1.4,
+        W_min=0.4,
         beta=0.999,
         c1=2,
         c2=2,
@@ -26,14 +27,14 @@ class PSO():
     ): 
         
         # Error handling
-        self.error_check(args= locals())
+        #self.error_check(args= locals())
 
         # Initilize variables & constants
-        self.objective_func = objective_fn
-        self.dimensionality = objective_fn.__code__.co_argcount # n
-        self.variable_names = objective_fn.__code__.co_varnames 
-        self.n_individuals = n_individuals # N
-        self.inertia = inertia
+        self.object_fn = object_fn
+        self.n = object_fn.__code__.co_argcount 
+        self.N = N 
+        self.W = W
+        self.W_min = W_min
         self.beta = beta
         self.c1 = c1
         self.c2 = c2
@@ -41,18 +42,17 @@ class PSO():
         self.x_max = x_max
         self.x_min = x_min
         self.alpha = alpha
-        self.v_max = (x_max-x_min)/(2*self.dt)
+        self.v_max = (x_max-x_min)/(self.dt)
         self.verbatim = verbatim
-        self.iterations = 0
 
         self.initialize_population() # (N, n) 
         self.initialize_velocity() # (N, n) 
 
         # Best score
-        self.particle_best = np.inf*np.ones(self.n_individuals) # (n,)
+        self.particle_best = np.inf*np.ones(self.N) # (n,)
+        self.particle_best_pos = np.zeros((self.N, self.n)) # (N, n)
         self.swarm_best = np.inf # (,)
-        self.particle_best_pos = np.zeros((self.n_individuals, self.dimensionality)) # (N, n)
-        self.swarm_best_pos = np.zeros(self.dimensionality) # (3,)
+        self.swarm_best_pos = np.zeros(self.n) # (3,)
 
     def error_check(self, args):
         ''' Does weak checking of the input arguments '''
@@ -61,7 +61,7 @@ class PSO():
 
         if not args['objective_func'].__name__ == "<lambda>" or not isinstance(args['objective_func'], types.LambdaType):
             raise ValueError("objective_func variable must be a lambda function")
-        elif not isinstance(args['n_individuals'], int) or args['n_individuals'] <= 0:
+        elif not isinstance(args['N'], int) or args['n_individuals'] <= 0:
             raise ValueError("Population must be a positive integer")
         elif args['x_max'] < args['x_min']:
             raise ValueError("x_max must be larger than x_min arguments")
@@ -73,57 +73,49 @@ class PSO():
             raise ValueError("c1 and c2 parameters must be positive floats")
         elif args['beta'] <= 0:
             raise ValueError("Beta parameter must be positive float")
-        elif args['inertia'] <= 0:
-            raise ValueError("Inertia parameter must be positive float")
+        elif args['W'] <= 0:
+            raise ValueError("W parameter must be positive float")
 
     def initialize_population(self):
         ''' Uniformly initializes swarm population in [x_min, x_max] '''
-        r = np.random.rand(self.n_individuals, self.dimensionality) # (N,n)
+        r = np.random.rand(self.N, self.n) # (N,n)
         self.population = self.x_min + r*(self.x_max-self.x_min)
 
     def initialize_velocity(self):
         ''' Initialize velocities '''
-        r = np.random.rand(self.n_individuals, self.dimensionality) #  (N,n)
+        r = np.random.rand(self.N, self.n) #  (N,n)
         self.velocity = (self.alpha/self.dt)*((self.x_min-self.x_max)/2+ r*(self.x_max-self.x_min))
 
     def evaluate_population(self):
 
-        population_dictionary = {}
-
-        for variable_idx, variable_key in enumerate(self.variable_names):
-            population_dictionary[variable_key] = self.population[:,variable_idx]
-
-    
-        self.fitness = self.objective_func(*population_dictionary.values())
-
+        # Evaluate population
+        self.fitness_scores = self.object_fn(*[x_i for x_i in self.population.T])
 
         # Update best positions
-        for particle_idx, particle_score in enumerate(self.fitness):
+        for p_idx, p_score in enumerate(self.fitness_scores):
 
-            if particle_score < self.particle_best[particle_idx]: # particle best
-                self.particle_best[particle_idx] = particle_score
-                new_pos = self.population[particle_idx,:].copy()
-                self.particle_best_pos[particle_idx,:] = new_pos
+            if p_score < self.particle_best[p_idx]: # Particle best
+                self.particle_best[p_idx] = p_score
+                new_pos = self.population[p_idx,:].copy()
+                self.particle_best_pos[p_idx,:] = new_pos
                 
-                if particle_score < self.swarm_best:  # swarm best
-                    self.swarm_best = particle_score
+                if p_score < self.swarm_best:  # Swarm best
+                    self.swarm_best = p_score
                     self.swarm_best_pos = new_pos
                     
 
     def update_velocity(self):
-        r = np.random.rand(self.n_individuals, self.dimensionality)
-        q = np.random.rand(self.n_individuals, self.dimensionality)
-        self.velocity  = self.velocity*self.inertia + self.c1*q*(self.particle_best_pos-self.population)/self.dt + self.c2*r*(self.swarm_best_pos-self.population)/self.dt
+        r = np.random.rand(self.N, self.n)
+        q = np.random.rand(self.N, self.n)
+        C1 = (self.c1*q)/self.dt
+        C2 = (self.c2*r)/self.dt
+        self.velocity  = self.velocity*self.W + C1*(self.particle_best_pos-self.population) + C2*(self.swarm_best_pos-self.population)
 
     def restrict_velocity(self):
-        
-        speed = np.linalg.norm(self.velocity, ord= 2, axis= 1)
+        speed = np.linalg.norm(self.velocity, ord=2, axis=1)
         overlimit_idx = np.argwhere(speed > self.v_max)
-
         for idx in overlimit_idx:
-
-            v_norm = np.linalg.norm(self.velocity[idx,:])
-            self.velocity[idx,:] = (self.v_max/v_norm)*self.velocity[idx,:]
+            self.velocity[idx,:] *= (self.v_max/speed[idx])
 
     def train_epoch(self):
         
@@ -131,28 +123,35 @@ class PSO():
         self.update_velocity()
         self.restrict_velocity()
         self.population = self.population + self.velocity*self.dt # update position
-        self.inertia = max(0.4, self.inertia*self.beta)
+        self.W = max(self.W_min, self.W*self.beta)
 
 
-    def fit(self, epochs):
+    def fit(self, n_epochs: int):
 
-        for epoch in range(epochs):     
+        for epoch in range(n_epochs):     
             self.train_epoch()
-            self.iterations += 1
             if self.verbatim:
-                print("Epoch",1+epoch, "with best fitness", self.swarm_best)
+                print(f"Epoch {epoch} with best fitness F = {self.swarm_best:.3f}")
+        print("PSO algorithm finished!")
 
 
 
 if __name__ == '__main__':
 
-    objective_fn = lambda x,y: (x**2+y-11)**2 + (x+y**2-7)**2
+    object_fn = lambda x,y: (x**2+y-11)**2 + (x+y**2-7)**2
 
+    PSO = ParticleSwarmOptimization(object_fn=object_fn, x_min=-5, x_max=5, N=30, verbatim=1)
+    PSO.fit(30)
 
-    PSO_optimizer = PSO(objective_func=objective_fn, x_min=-5, x_max=5, n_individuals=30, verbatim=0)
-    PSO_optimizer.fit(50)
+    print(PSO.swarm_best)
+    print(PSO.swarm_best_pos)
 
-    print("Training done \n --------------")
-    print(PSO_optimizer.swarm_best)
-    print(PSO_optimizer.swarm_best_pos)
+    N = 100
+    x = np.linspace(-5,5,N)
+    X,Y = np.meshgrid(x,x)
+    Z = np.log((X**2+Y-11)**2 + (X+Y**2-7)**2)
+    plt.contourf(X,Y,Z)
+    x_best, y_best = PSO.swarm_best_pos
+    plt.scatter(x_best, y_best, marker="x", s=40, c="black")
+    plt.show()
 
