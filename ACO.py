@@ -1,42 +1,47 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-class ACO():
+class AntColonyOptimization():
 
 
-    def __init__(self, X: np.ndarray, mode:str= "AS", alpha:float= 1.0, beta:float= 2.5, rho:float= 0.5, verbatim:bool= False):
+    def __init__(
+        self, X: np.ndarray,
+        mode: str = "AS",
+        alpha: float = 1.0,
+        beta: float = 2.5,
+        rho: float = 0.5,
+        verbatim: bool = False):
 
         # Error handling
-        self.ErrorCheck(args= locals())
+        self.error_check(args=locals())
 
         # Constants
         self.X = X # (nodes, dim)
-        self.n, self.dim = X.shape
-        self.n_ants = self.n
+        self.n, self.dim = X.shape # n = nodes
+        self.N = self.n # N = n_ants
         self.mode = mode
         self.alpha = alpha
         self.beta = beta
         self.rho = rho
         self.verbatim = verbatim
 
-        self.eta, self.D = self.VisibilityMatrix()
-        self.D_nn, self.nn_tour = self.NearestNeighbourTour()
+        self.visibility_matrix()
+        self.nearest_neighbour_tour()
 
         self.tau_max = 1/(self.rho*self.D_nn)
-        self.tau_min = self.tau_max*((1-0.05**(1/self.n))/((self.n/2)*(0.05**(1/self.n))))
+        self.tau_min = self.tau_max*((1-0.05**(1/self.n))/((self.n/2-1)*(0.05**(1/self.n))))
 
-        self.tau = self.InitializeTau()
+        self.initialize_tau()
 
         # Best tour variables
-        self.D_best = np.Inf
+        self.D_best = np.inf
         self.tour_best = []
 
 
-    def ErrorCheck(self, args):
+    def error_check(self, args):
 
         X, alpha, beta, rho = args["X"], args["alpha"], args["beta"], args["rho"]
     
-
         def RE(var):
             err_msg = var+" must be a positive float"
             raise ValueError(err_msg)
@@ -51,9 +56,8 @@ class ACO():
             RE("rho")
 
 
-    def VisibilityMatrix(self):
-        
-        ''' Initializes the visibility matrix and distance matrix D'''
+    def visibility_matrix(self):
+        ''' Initializes the visibility matrix eta and distance matrix D'''
 
         eta =  np.zeros((self.n,self.n)) 
         D = np.zeros((self.n,self.n)) # distance matrix, symmetric
@@ -62,6 +66,8 @@ class ACO():
             for j in range(i):
 
                 d_ij = np.linalg.norm(self.X[i,:]-self.X[j,:], ord=2)
+                d_ij2 = np.sqrt(((self.X[i,:]-self.X[j,:])**2).sum())
+                assert np.abs(d_ij-d_ij2) < 0.001, "Weird implementation" # TODO remove
                 eta_ij = 1/d_ij
 
                 D[i,j] = d_ij
@@ -69,10 +75,11 @@ class ACO():
                 eta[i,j] = eta_ij
                 eta[j,i] = eta_ij
 
-        return eta, D
+        self.eta = eta
+        self.D = D
 
 
-    def NearestNeighbourTour(self):
+    def nearest_neighbour_tour(self):
 
         ''' Calculates the nearest neighbour tour and it's distance D_nn '''
 
@@ -84,7 +91,7 @@ class ACO():
         for _ in range(self.n-1):
 
             unvisited_nodes = np.setdiff1d(all_nodes, tour) # index of unvisted nodes
-            unvisted_min_idx = np.argmin(self.D[current_node, unvisited_nodes]) # high eta = low distance
+            unvisted_min_idx = np.argmin(self.D[unvisited_nodes, current_node]) # high eta = low distance
 
             next_node = unvisited_nodes[unvisted_min_idx]
             tour.append(next_node)
@@ -92,71 +99,65 @@ class ACO():
         
         tour.append(start_node) # close the path
         
-        D_nn = self.GetPathLength(tour)
+        D_nn = self.get_path_length(tour)
 
-        return D_nn, tour
+        self.D_nn = D_nn
+        self.tour_nn = tour
 
-
-    def InitializeTau(self):
-        
+    def initialize_tau(self):
         ''' Initializes the pheromone matrix tau'''
 
         ones = np.ones((self.n,self.n))
-        
         if self.mode == "AS":
-            return (self.n_ants/self.D_nn)*ones
-        elif self.mode == "MMAS":
-            return self.tau_max*ones
-        else:
-            raise ValueError("Unknown mode. Supported modes are; 'AS' and 'MMAS'.")
+            self.tau = (self.N/self.D_nn)*ones
+        else: # MMAS
+            self.tau = self.tau_max*ones
 
 
-    def Fit(self, epochs):
-        
-        ''' Runs the main ACO algorithm using
-            the given mode '''
+    def fit(self, n_epochs):
+        ''' Runs the main ACO algorithm using the given mode '''
 
-        for epoch in range(epochs):
+        for epoch in range(n_epochs):
 
-            if self.mode == "AS":
+            if self.mode == "AS": # Ant system
 
                 delta_tau = np.zeros((self.n,self.n))
 
-                for ant_k in range(self.n_ants): # Generate paths
+                for ant_k in range(self.N): # Generate paths
                     
-                    tour_k = self.GenerateTour()
-                    D_k = self.GetPathLength(tour_k)
+                    tour_k = self.generate_tour()
+                    D_k = self.get_path_length(tour_k)
 
-                    if D_k < self.D_best:
-
+                    if D_k < self.D_best: # Found new best path
                         self.D_best = D_k
                         self.tour_best = tour_k
                         if self.verbatim:
                             print(f"New best path found in epoch {epoch} from ant {ant_k} with path length D_k = {D_k:.3f}")
 
 
-                    delta_tau += self.DeltaTauK(tour_k, D_k)
+                    delta_tau += self.delta_tau_k(tour_k, D_k)
 
-                self.tau = (1-self.rho)*self.tau + delta_tau # pheromone evaporation
+                # Update pheromone matrix tau
+                self.tau = (1-self.rho)*self.tau + delta_tau 
 
             else: # Max-min ant system
                 
                 D_mmas = np.inf
 
-                for ant_k in range(self.n_ants): 
+                for ant_k in range(self.N): 
                     
-                    tour_k = self.GenerateTour()
-                    D_k = self.GetPathLength(tour_k)
+                    tour_k = self.generate_tour()
+                    D_k = self.get_path_length(tour_k)
 
                     if D_k < D_mmas: # best tour this iteration
 
-                        D_mmas = D_k
                         tour_mmas = tour_k
+                        D_mmas = D_k
 
                         if D_k < self.D_best: # best tour so far
 
-                            self.D_best = D_k
                             self.tour_best = tour_k
+                            self.D_best = D_k
                             if self.verbatim:
                                 print(f"New best path found in epoch {epoch} from ant {ant_k} with path length D_k = {D_k:.3f}")
 
@@ -166,14 +167,10 @@ class ACO():
                 self.tau = (1-self.rho)*self.tau + delta_tau # Update pheromones
                 
                 # Impose limits
-                self.TauLimits()
+                self.tau_limits()
 
-
-
-    def GenerateTour(self):
-        
-        ''' Generates a TSP tour from a randomly 
-            selected started node '''
+    def generate_tour(self):
+        ''' Generates a TSP tour from a randomly selected started node '''
 
         all_nodes = np.arange(self.n)
         start_node = np.random.choice(all_nodes) # random start node
@@ -184,7 +181,7 @@ class ACO():
 
             unvisited_nodes = np.setdiff1d(all_nodes, tour) # index of unvisted nodes
 
-            next_node = self.NextNode(current_node, unvisited_nodes)
+            next_node = self.next_node(current_node, unvisited_nodes)
             tour.append(next_node)
             current_node = next_node
 
@@ -193,32 +190,31 @@ class ACO():
         return tour
 
 
-    def NextNode(self, current_node, unvisited_nodes):
-        
-        ''' Performs tournament selection among
-            the unvisted nodes '''
+    def next_node(self, current_node, unvisited_nodes):
+        ''' Performs tournament selection among the unvisted nodes '''
 
         tau_eta = (self.eta[unvisited_nodes, current_node]**self.alpha)*(self.tau[unvisited_nodes, current_node]**self.beta)
         normalization_factor = tau_eta.sum()
         transition_probability = tau_eta / normalization_factor
 
-        r = np.random.rand()
-        q = 0
+        node_idx = np.random.choice(unvisited_nodes, size=1, p=transition_probability)
+        return node_idx
 
-        prob_sum = transition_probability[q]
+        #r = np.random.rand()
+        #q = 0
 
-        while prob_sum <= r:
-            q += 1
-            prob_sum += transition_probability[q]
+        #prob_sum = transition_probability[q]
 
-        return unvisited_nodes[q]
+        #while prob_sum <= r:
+            #q += 1
+            #prob_sum += transition_probability[q]
 
+        #return unvisited_nodes[q]
 
-    def GetPathLength(self, tour):
+    def get_path_length(self, tour):
         return self.D[tour[1:],tour[:-1]].sum()
 
-
-    def DeltaTauK(self, tour_k, D_k):
+    def delta_tau_k(self, tour_k, D_k):
 
         ''' Delta tau matrix for a tour'''
 
@@ -227,17 +223,15 @@ class ACO():
         return delta_tau_k
     
 
-    def TauLimits(self):
-
+    def tau_limits(self):
         ''' Updates tau limits for MMAS '''
         
         self.tau[self.tau < self.tau_min] = float(self.tau_min)
         self.tau[self.tau > self.tau_max] = float(self.tau_max)
         self.tau_max = 1/(self.rho*self.D_best)
-        self.tau_min = self.tau_max*((1-0.05**(1/self.n))/((self.n/2)*(0.05**(1/self.n))))
+        self.tau_min = self.tau_max*((1-0.05**(1/self.n))/((self.n/2-1)*(0.05**(1/self.n))))
 
-
-    def PlotTSP(self):
+    def plot_tsp(self):
 
         if self.dim == 2:
             plt.scatter(X[:,0],X[:,1])
@@ -251,7 +245,7 @@ class ACO():
 
 if __name__ == '__main__':
     X = np.random.rand(40,2)
-    AS = ACO(X=X, mode= "AS")
-    AS.Fit(100)
-    AS.PlotTSP()
+    ACO = AntColonyOptimization(X=X, mode= "AS")
+    ACO.fit(100)
+    ACO.plot_tsp()
 
