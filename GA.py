@@ -1,4 +1,3 @@
-from multiprocessing.dummy import Value
 import numpy as np
 import Selectors
 
@@ -188,3 +187,4 @@ if __name__ == '__main__':
     GA_obj = GA(object_func= obj_fun, variable_length= 16, n_chromosomes= 100, selector= Selectors.RouletteWheelSelection(), verbatim= 1)
     GA_obj.Fit(50)
     print(GA_obj.variables[GA_obj.i_best, :])
+
