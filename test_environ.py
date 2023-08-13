@@ -1,6 +1,4 @@
 import numpy as np 
-from selectors import TournamentSelection
-
 
 ## SELECTION TESTING
 
@@ -36,7 +34,16 @@ from selectors import TournamentSelection
 #print(fitness2)
 #print(fitness2.shape)
 
-N = 11
-ptr = 0
-for i in range (ptr,N-1,2):
-    print(i,i+1)
+x = np.arange(5)
+y = 3*np.sin(x)
+import matplotlib.pyplot as plt
+
+plt.plot(x,y)
+for i in range(5):
+    if i == 4: break
+    x_arrow = (x[i]+x[i+1])/2
+    y_arrow = (y[i]+y[i+1])/2
+    dx_arrow = (x[i+1]-x[i])/4
+    dy_arrow = (y[i+1]-y[i])/4
+    plt.arrow(x_arrow,y_arrow, dx_arrow, dy_arrow, width=0.01)
+plt.show()

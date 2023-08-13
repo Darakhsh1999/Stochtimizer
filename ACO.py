@@ -5,8 +5,10 @@ class AntColonyOptimization():
 
 
     def __init__(
-        self, X: np.ndarray,
+        self,
+        X: np.ndarray,
         mode: str = "AS",
+        N: int = None,
         alpha: float = 1.0,
         beta: float = 2.5,
         rho: float = 0.5,
@@ -16,9 +18,9 @@ class AntColonyOptimization():
         self.error_check(args=locals())
 
         # Constants
-        self.X = X # (nodes, dim)
+        self.X: np.ndarray = X # (nodes, dim)
         self.n, self.dim = X.shape # n = nodes
-        self.N = self.n # N = n_ants
+        self.N = N if N is not None else self.n # N = n_ants
         self.mode = mode
         self.alpha = alpha
         self.beta = beta
@@ -113,7 +115,6 @@ class AntColonyOptimization():
         else: # MMAS
             self.tau = self.tau_max*ones
 
-
     def fit(self, n_epochs):
         ''' Runs the main ACO algorithm using the given mode '''
 
@@ -189,7 +190,6 @@ class AntColonyOptimization():
 
         return tour
 
-
     def next_node(self, current_node, unvisited_nodes):
         ''' Performs tournament selection among the unvisted nodes '''
 
@@ -197,35 +197,21 @@ class AntColonyOptimization():
         normalization_factor = tau_eta.sum()
         transition_probability = tau_eta / normalization_factor
 
-        node_idx = np.random.choice(unvisited_nodes, size=1, p=transition_probability)
+        node_idx = np.random.choice(unvisited_nodes, size=1, p=transition_probability)[0]
         return node_idx
 
-        #r = np.random.rand()
-        #q = 0
-
-        #prob_sum = transition_probability[q]
-
-        #while prob_sum <= r:
-            #q += 1
-            #prob_sum += transition_probability[q]
-
-        #return unvisited_nodes[q]
-
     def get_path_length(self, tour):
+        ''' Calculates the path length of a given tour '''
         return self.D[tour[1:],tour[:-1]].sum()
 
     def delta_tau_k(self, tour_k, D_k):
-
         ''' Delta tau matrix for a tour'''
-
         delta_tau_k = np.zeros((self.n,self.n))
         delta_tau_k[tour_k[1:], tour_k[:-1]] = 1/D_k
         return delta_tau_k
     
-
     def tau_limits(self):
         ''' Updates tau limits for MMAS '''
-        
         self.tau[self.tau < self.tau_min] = float(self.tau_min)
         self.tau[self.tau > self.tau_max] = float(self.tau_max)
         self.tau_max = 1/(self.rho*self.D_best)
@@ -234,18 +220,28 @@ class AntColonyOptimization():
     def plot_tsp(self):
 
         if self.dim == 2:
-            plt.scatter(X[:,0],X[:,1])
-            plt.plot(X[self.tour_best[0],0], X[self.tour_best[0],1], 'kx')
-            plt.plot(X[self.tour_best,0], X[self.tour_best,1], 'r--')
+            plt.scatter(X[self.tour_best[0],0], X[self.tour_best[0],1], marker="x", c="k", s=200) # start
+            plt.scatter(X[:,0],X[:,1]) # node
+            for node_idx, n1 in enumerate(self.tour_best): # Add arrows
+                if node_idx == self.n: break
+                n2 = self.tour_best[node_idx+1]
+                x_arrow, y_arrow = self.X[n1,:]
+                dx_arrow, dy_arrow = (self.X[n2,:]-self.X[n1,:])
+                plt.arrow(x_arrow,y_arrow, dx_arrow, dy_arrow, length_includes_head=True, width=0.003)
+            plt.grid()
+            plt.xlim([0,1.0])
+            plt.ylim([0,1.0])
+            plt.title(f"Shortest path $D_k$ = {self.D_best:.3f}")
+            plt.legend(["Start","Nodes","Path"])
+
             plt.show()
         else:
             raise Exception("Plotting is only supported for 2 dimensional data")
 
 
-
 if __name__ == '__main__':
-    X = np.random.rand(40,2)
-    ACO = AntColonyOptimization(X=X, mode= "AS")
+    X = np.random.rand(30,2)
+    ACO = AntColonyOptimization(X=X, N= 40, verbatim=True)
     ACO.fit(100)
     ACO.plot_tsp()
 
