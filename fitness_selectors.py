@@ -1,23 +1,19 @@
 import numpy as np
 
 class TournamentSelection():
-
     ''' Tournament selection with variable size tournament'''
 
-    def __init__(self, tournament_prob, tournament_size, replace= True):
+    def __init__(self, tournament_prob, tournament_size, replace=True):
         
         self.p_tour = tournament_prob
         self.size = tournament_size
         self.replace = replace
 
-    def SetSize(self, N):
-        self.N = N
-
-    def Select(self, fitness_scores):
+    def select(self, fitness_scores):
 
         ''' Performs 1 selection '''
 
-        tournament = np.random.choice(np.arange(self.N), self.size, replace= self.replace) # index of tournament individuals 
+        tournament = np.random.choice(np.arange(len(fitness_scores)), self.size, replace=self.replace) # index of tournament individuals 
          
 
         while True:
@@ -37,7 +33,7 @@ class RouletteWheelSelection():
 
     ''' Fitness proportionate roulette wheel selection '''
 
-    def Select(self, fitness_scores):
+    def select(self, fitness_scores):
 
         ''' Performs 1 selection '''
         
