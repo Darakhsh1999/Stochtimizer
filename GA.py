@@ -2,6 +2,7 @@ import numpy as np
 import fitness_selectors
 import matplotlib.pyplot as plt
 from error_check import error_check
+from collections import defaultdict
 
 
 class GeneticAlgorithm():
@@ -39,6 +40,9 @@ class GeneticAlgorithm():
         self.m = self.chromosome_length if self.encoding == "binary" else self.n_variables
         self.N = n_chromosomes
         self.d = range
+
+        # History
+        self.history: dict[list] = defaultdict(list)
 
         self.p_mut = c_mult/(self.m) # mutation probability
         self.p_c = p_c # crossover probability
@@ -82,6 +86,9 @@ class GeneticAlgorithm():
 
             # Sample next population generation
             self.next_generation()
+
+            # Append to history
+            self.update_hist()
 
 
     def decode(self):
@@ -171,6 +178,11 @@ class GeneticAlgorithm():
             chromosome[mutate_idx] = 1 - chromosome[mutate_idx]
 
         return chromosome
+    
+    def update_hist(self):
+        self.history["best_chromosome"].append(self.best_chromosome)
+        self.history["best_variable"].append(self.best_variables)
+        self.history["F_best"].append(self.F_best)
 
 
 

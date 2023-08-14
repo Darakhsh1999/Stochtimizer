@@ -12,7 +12,7 @@ def error_check(args, algorithm):
             raise ValueError("Population must be a positive integer")
         elif args["x_max"] < args["x_min"]:
             raise ValueError("x_max must be larger than x_min arguments")
-        elif not (0 < args["alpha"] < 1.0):
+        elif not (0 < args["alpha"] <= 1.0):
             raise ValueError("Alpha parameter must be positive float in range [0,1]")
         elif args["dt"] <= 0:
             raise ValueError("Time step dt must be positive float")

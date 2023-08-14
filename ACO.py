@@ -1,9 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from collections import defaultdict
 from error_check import error_check
 
 class AntColonyOptimization():
-
 
     def __init__(
         self,
@@ -28,6 +28,9 @@ class AntColonyOptimization():
         self.beta = beta
         self.rho = rho
         self.verbatim = verbatim
+
+        # History
+        self.history: dict[list] = defaultdict(list)
 
         self.visibility_matrix()
         self.nearest_neighbour_tour()
@@ -62,7 +65,6 @@ class AntColonyOptimization():
 
         self.eta = eta
         self.D = D
-
 
     def nearest_neighbour_tour(self):
 
@@ -123,6 +125,9 @@ class AntColonyOptimization():
 
                 # Update pheromone matrix tau
                 self.tau = (1-self.rho)*self.tau + delta_tau 
+            
+                # Append to history
+                self.update_hist()
 
             else: # Max-min ant system
                 
@@ -152,6 +157,9 @@ class AntColonyOptimization():
                 
                 # Impose limits
                 self.tau_limits()
+
+                # Append to history
+                self.update_hist()
 
     def generate_tour(self):
         ''' Generates a TSP tour from a randomly selected started node '''
@@ -199,8 +207,13 @@ class AntColonyOptimization():
         self.tau[self.tau > self.tau_max] = float(self.tau_max)
         self.tau_max = 1/(self.rho*self.D_best)
         self.tau_min = self.tau_max*((1-0.05**(1/self.n))/((self.n/2-1)*(0.05**(1/self.n))))
+    
+    def update_hist(self):
+        self.history["D_best"].append(self.D_best)
+        self.history["T_best"].append(self.tour_best)
+        self.history["tau"].append(self.tau)
 
-    def plot_tsp(self):
+    def plot_shortest_path(self):
 
         if self.dim == 2:
             plt.scatter(X[self.tour_best[0],0], X[self.tour_best[0],1], marker="x", c="k", s=200) # start
@@ -222,9 +235,10 @@ class AntColonyOptimization():
             raise Exception("Plotting is only supported for 2 dimensional data")
 
 
+
 if __name__ == '__main__':
     X = np.random.rand(30,2)
     ACO = AntColonyOptimization(X=X, N=40, mode="AS", verbatim=True)
     ACO.fit(100)
-    ACO.plot_tsp()
+    ACO.plot_shortest_path()
 

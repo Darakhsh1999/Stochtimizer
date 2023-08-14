@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from error_check import error_check
+from collections import defaultdict
 
 class ParticleSwarmOptimization():
 
@@ -45,6 +46,9 @@ class ParticleSwarmOptimization():
         self.alpha = alpha
         self.v_max = (x_max-x_min)/(self.dt)
         self.verbatim = verbatim
+
+        # History
+        self.history: dict[list] = defaultdict(list)
 
         self.initialize_population() # (N, n) 
         self.initialize_velocity() # (N, n) 
@@ -104,6 +108,7 @@ class ParticleSwarmOptimization():
         self.restrict_velocity()
         self.population = self.population + self.velocity*self.dt # update position
         self.W = max(self.W_min, self.W*self.beta)
+        self.update_hist()
 
 
     def fit(self, n_epochs: int):
@@ -113,6 +118,13 @@ class ParticleSwarmOptimization():
             if self.verbatim:
                 print(f"Epoch {epoch} with best fitness F = {self.swarm_best:.3f}")
         print("PSO algorithm finished!")
+    
+    def update_hist(self):
+        self.history["population"].append(self.population)
+        self.history["velocity"].append(self.velocity)
+        self.history["swarm_best"].append(self.swarm_best)
+        self.history["swarm_best_pos"].append(self.swarm_best_pos)
+        self.history["fitness_scores"].append(self.fitness_scores)
 
 
 
