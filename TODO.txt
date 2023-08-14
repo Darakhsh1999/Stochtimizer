@@ -1,2 +1,1 @@
 - Add defaultdict(list) history object for all optimzers 
-- more error checking

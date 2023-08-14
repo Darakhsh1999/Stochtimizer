@@ -37,3 +37,13 @@ class RouletteWheelSelection():
         return np.random.choice(len(fitness_scores), size=1, p=fitness_scores)
 
 
+
+if __name__ == "__main__":
+
+
+    T = TournamentSelection(0.4, 5)
+
+    print(dir(T))
+    print(T.__class__)
+    print(type(T.__class__))
+    print((str(T.__class__)))

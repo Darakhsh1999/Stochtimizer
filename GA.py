@@ -1,6 +1,7 @@
 import numpy as np
 import fitness_selectors
 import matplotlib.pyplot as plt
+from error_check import error_check
 
 
 class GeneticAlgorithm():
@@ -14,10 +15,10 @@ class GeneticAlgorithm():
                  range=10, 
                  c_mult=1, 
                  p_c=0.7,
-                 verbatim=0,
+                 verbatim=False,
                  elitism=True):
 
-        self.error_check(args = locals())
+        error_check(args=locals(), algorithm="GA")
 
         self.object_fn = object_fn # f(x)
         self.n_variables = object_fn.__code__.co_argcount # n
@@ -43,14 +44,6 @@ class GeneticAlgorithm():
         self.p_c = p_c # crossover probability
 
         self.initialize_population()
-
-
-    def error_check(self, args):
-
-        ''' Validates input data '''
-            # if encoding is real -> check var_len =1 
-        pass # check so encoding isnt real and variable_length =! 1 
-
 
     def initialize_population(self):
         """ Initializes N chromosomes for start population, where chromsome.shape = (N,m) """
@@ -81,7 +74,7 @@ class GeneticAlgorithm():
                 self.best_chromosome = self.population[self.i_best,:].copy() 
                 self.best_variables = self.variables[self.i_best,:].copy()
 
-            if self.verbatim > 0:
+            if self.verbatim:
                 print(f"Best fitness in epoch {epoch:3} is F_max = {self.F_best:.4f}")
             
             if epoch == n_epochs:
@@ -149,11 +142,8 @@ class GeneticAlgorithm():
 
     def select_pair(self):
         ''' Picks chromosome pair using selector '''
-
         c1_idx = self.selector.select(self.fitness_scores)
         c2_idx = self.selector.select(self.fitness_scores)
-        if self.verbatim > 1:
-            print(f"Selected indiviuals, ({c1_idx},{c2_idx})")
         return self.population[c1_idx,:].copy(), self.population[c2_idx,:].copy()
         
 
@@ -195,7 +185,7 @@ if __name__ == '__main__':
         n_chromosomes=100,
         range=5,
         selector=fitness_selectors.TournamentSelection(tournament_prob=0.75, tournament_size=10),
-        verbatim=1,
+        verbatim=True,
         c_mult= 1,
         encoding="binary"
     )

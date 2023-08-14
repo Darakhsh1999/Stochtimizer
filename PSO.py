@@ -1,6 +1,6 @@
-import types
 import numpy as np
 import matplotlib.pyplot as plt
+from error_check import error_check
 
 class ParticleSwarmOptimization():
 
@@ -24,11 +24,11 @@ class ParticleSwarmOptimization():
         c2=2,
         dt=1,
         alpha=1,
-        verbatim=0
+        verbatim=False
     ): 
         
         # Error handling
-        #self.error_check(args= locals())
+        error_check(args=locals(), algorithm="PSO")
 
         # Initilize variables & constants
         self.object_fn = object_fn
@@ -55,27 +55,6 @@ class ParticleSwarmOptimization():
         self.swarm_best = np.inf # (,)
         self.swarm_best_pos = np.zeros(self.n) # (3,)
 
-    def error_check(self, args):
-        ''' Does weak checking of the input arguments '''
-
-        print(args['objective_func'].__name__)
-
-        if not args['objective_func'].__name__ == "<lambda>" or not isinstance(args['objective_func'], types.LambdaType):
-            raise ValueError("objective_func variable must be a lambda function")
-        elif not isinstance(args['N'], int) or args['n_individuals'] <= 0:
-            raise ValueError("Population must be a positive integer")
-        elif args['x_max'] < args['x_min']:
-            raise ValueError("x_max must be larger than x_min arguments")
-        elif not 0 < args['alpha'] <= 1:
-            raise ValueError("Alpha parameter must be in interval (0,1]")
-        elif args['dt'] <= 0:
-            raise ValueError("Time step must be positive float")
-        elif args['c1'] <= 0 or args['c2'] <= 0:
-            raise ValueError("c1 and c2 parameters must be positive floats")
-        elif args['beta'] <= 0:
-            raise ValueError("Beta parameter must be positive float")
-        elif args['W'] <= 0:
-            raise ValueError("W parameter must be positive float")
 
     def initialize_population(self):
         ''' Uniformly initializes swarm population in [x_min, x_max] '''
@@ -141,7 +120,7 @@ if __name__ == '__main__':
 
     object_fn = lambda x,y: (x**2+y-11)**2 + (x+y**2-7)**2
 
-    PSO = ParticleSwarmOptimization(object_fn=object_fn, x_min=-5, x_max=5, N=30, verbatim=1)
+    PSO = ParticleSwarmOptimization(object_fn=object_fn, x_min=-5, x_max=5, N=30, verbatim=True)
     PSO.fit(30)
 
     print(PSO.swarm_best)

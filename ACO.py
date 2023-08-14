@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from error_check import error_check
 
 class AntColonyOptimization():
 
@@ -12,10 +13,11 @@ class AntColonyOptimization():
         alpha: float = 1.0,
         beta: float = 2.5,
         rho: float = 0.5,
-        verbatim: bool = False):
+        verbatim: bool = False
+        ):
 
         # Error handling
-        self.error_check(args=locals())
+        error_check(args=locals(), algorithm="ACO")
 
         # Constants
         self.X: np.ndarray = X # (nodes, dim)
@@ -38,25 +40,6 @@ class AntColonyOptimization():
         # Best tour variables
         self.D_best = np.inf
         self.tour_best = []
-
-
-    def error_check(self, args):
-
-        X, alpha, beta, rho = args["X"], args["alpha"], args["beta"], args["rho"]
-    
-        def RE(var):
-            err_msg = var+" must be a positive float"
-            raise ValueError(err_msg)
-
-        if not isinstance(X, np.ndarray):
-            raise ValueError("X must be a numpy array")
-        elif not isinstance(alpha, float) or alpha <= 0:
-            RE("alpha")
-        elif not isinstance(beta, float) or beta <= 0:
-            RE("beta")
-        elif not isinstance(rho, float) or rho <= 0:
-            RE("rho")
-
 
     def visibility_matrix(self):
         ''' Initializes the visibility matrix eta and distance matrix D'''
@@ -232,7 +215,7 @@ class AntColonyOptimization():
             plt.xlim([0,1.0])
             plt.ylim([0,1.0])
             plt.title(f"Shortest path $D_k$ = {self.D_best:.3f}")
-            plt.legend(["Start","Nodes","Path"])
+            plt.legend(["Start","Nodes","Path"], loc="upper right")
 
             plt.show()
         else:
@@ -241,7 +224,7 @@ class AntColonyOptimization():
 
 if __name__ == '__main__':
     X = np.random.rand(30,2)
-    ACO = AntColonyOptimization(X=X, N= 40, mode="MMAS", verbatim=True)
+    ACO = AntColonyOptimization(X=X, N=40, mode="AS", verbatim=True)
     ACO.fit(100)
     ACO.plot_tsp()
 
