@@ -4,18 +4,19 @@ class TournamentSelection():
     ''' Tournament selection with variable size tournament'''
 
     def __init__(self, tournament_prob, tournament_size, replace=True):
+
+        assert 1.0 >= tournament_prob >= 0.0, "tournament_prob has to be in the range [0,1]"
+        assert tournament_size > 0, "tournament_size has to be a positive integer"
+        assert isinstance(tournament_size, int), "tournament_size has to be an integer"
         
         self.p_tour = tournament_prob
         self.size = tournament_size
         self.replace = replace
 
     def select(self, fitness_scores):
-
         ''' Performs 1 selection '''
 
         tournament = np.random.choice(np.arange(len(fitness_scores)), self.size, replace=self.replace) # index of tournament individuals 
-         
-
         while True:
 
             tournament_fitness = fitness_scores[tournament]
@@ -28,22 +29,11 @@ class TournamentSelection():
             else:
                 tournament = np.delete(tournament, best_tournament_idx)
 
-
 class RouletteWheelSelection():
-
     ''' Fitness proportionate roulette wheel selection '''
 
     def select(self, fitness_scores):
-
         ''' Performs 1 selection '''
-        
-        r = np.random.rand()
-        phi_i = 0.0
-        F_tot = fitness_scores.sum()
-        
-        for i, F_i in enumerate(fitness_scores):
-            phi_i += float(F_i/F_tot)
-            if phi_i > r:
-                return i 
+        return np.random.choice(len(fitness_scores), size=1, p=fitness_scores)
 
 

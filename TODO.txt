@@ -1,2 +1,2 @@
-- Add error check to tournament selection
 - Add defaultdict(list) history object for all optimzers 
+- more error checking
