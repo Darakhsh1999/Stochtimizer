@@ -23,7 +23,6 @@ class GeneticAlgorithm():
 
         self.object_fn = object_fn # f(x)
         self.n_variables = object_fn.__code__.co_argcount # n
-        self.variable_names = object_fn.__code__.co_varnames 
         self.chromosome_length = self.n_variables*variable_length # m
         self.variable_length = variable_length # k
         self.n_chromosomes = n_chromosomes # population size

@@ -4,6 +4,7 @@ import fitness_selectors
 import matplotlib.pyplot as plt
 from error_check import error_check
 from collections import defaultdict
+from binary_operations import BinaryOperations
 
 class LinearGeneticProgramming():
 
@@ -21,8 +22,6 @@ class LinearGeneticProgramming():
         error_check(args=locals(), algorithm="LGP")
 
         self.object_fn = object_fn # f(x)
-        self.n_variables = object_fn.__code__.co_argcount # n
-        self.variable_names = object_fn.__code__.co_varnames 
         self.n_chromosomes = n_chromosomes # population size
         self.n_registers = n_registers
         self.initial_chromosome_length = initial_chromosome_length
@@ -57,8 +56,12 @@ class LinearGeneticProgramming():
                 chromosome += [operation, destination, operand1, operand2]
             self.population.append(chromosome)
 
-    def fit(self, n_epochs: int):
+    def fit(self, n_epochs: int, x, y):
         """ Executes the LGP algorithm """
+
+        # Input and target
+        self.x  = x
+        self.y = y
         
         for epoch in range(n_epochs):
 
@@ -84,13 +87,40 @@ class LinearGeneticProgramming():
 
             # Append to history
             self.update_hist()
-
-
-    def decode(self):
-        ''' Decodes chromosomes into variables into given range. output size (N,n) '''
-        pass
-
         
+    def evaluate_population(self):
+        
+        fitness_scores = np.zeros(self.N)
+
+        for i in range(self.N):
+
+            chromosome = self.population[i]
+            loss = 0.0
+
+            for idx, x in enumerate(self.x):
+                y_pred = self.operate(x, chromosome)
+                loss += self.object_fn(y_pred, self.y[idx])
+            
+            fitness_scores[i] = loss
+        
+        self.fitness_scores = fitness_scores
+
+
+    def operate(self, x, chromosome):
+        """ Performs operations according to chromosome """
+
+        A = [x] + (self.n_registers-1)*[0] + self.C # registers
+        
+        for i in range(0,len(chromosome),4):
+            operation = chromosome[i]
+            destination = chromosome[i+1]
+            operand1 = chromosome[i+2]
+            operand2 = chromosome[i+3]
+
+            A[destination] = self.operations[operation](operand1,operand2)
+        
+        return A[0] # r_0 = output
+
     def next_generation(self):
         
         next_population = np.zeros((self.N, self.m))
@@ -148,17 +178,6 @@ class LinearGeneticProgramming():
         return (new_chromosome1, new_chromosome2)
 
     def mutate(self, chromosome):
-
-        mutate_idx = np.random.rand(self.m) < self.p_mut
-
-        if self.encoding == 'real':
-            for m_idx in np.argwhere(mutate_idx): # Creep mutation
-                old_value = chromosome[m_idx] 
-                new_value =  max(min(np.random.normal(loc=old_value, scale=0.1),1), 0)
-                chromosome[m_idx] = new_value
-        else: # Bit flip mutation
-            chromosome[mutate_idx] = 1 - chromosome[mutate_idx]
-
         return chromosome
     
     def update_hist(self):
@@ -181,18 +200,7 @@ if __name__ == '__main__':
         c_mult= 1,
     )
 
-    LGP.fit(1000)
+    LGP.fit(200)
     print(LGP.best_variables)
     print(LGP.best_chromosome)
     print(LGP.F_best)
-
-
-    N = 100
-    x = np.linspace(-5,5,N)
-    X,Y = np.meshgrid(x,x)
-    Z = np.log((X**2+Y-11)**2 + (X+Y**2-7)**2)
-    plt.contourf(X,Y,Z)
-    x_best, y_best = LGP.best_variables
-    plt.scatter(x_best, y_best, marker="x", s=40, c="black")
-    plt.show()
-

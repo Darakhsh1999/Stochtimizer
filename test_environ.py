@@ -33,3 +33,4 @@ import numpy as np
 #print(fitness.shape)
 #print(fitness2)
 #print(fitness2.shape)
+
