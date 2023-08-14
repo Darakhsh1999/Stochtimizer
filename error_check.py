@@ -70,7 +70,24 @@ def error_check(args, algorithm):
                 raise ValueError("Population must be a positive integer")
 
     elif algorithm == "LGP":
-        pass
+
+
+        if not isinstance(args["object_fn"], types.LambdaType) or not args["object_fn"].__name__ == "<lambda>":
+            raise ValueError("object_fn variable must be a lambda function")
+        #elif isinstance(args["ini"]) or args["ini"] % 4 != 0:
+            #raise ValueError("Initial")
+        elif not isinstance(args["n_chromosomes"], int) or args["n_chromosomes"] <= 0:
+            raise ValueError("Population must be a positive integer")
+        elif not isinstance(args["variable_length"], int) or args["variable_length"] <= 0:
+            raise ValueError("variable_length must be a positive integer")
+        elif not (0 <= args["p_c"] <= 1.0):
+            raise ValueError("p_c must be in range [0,1]")
+        elif not isinstance(args["verbatim"], bool):
+            raise ValueError("verbatim has to be a boolean")
+        elif not isinstance(args["elitism"], bool):
+            raise ValueError("elitism must be a boolean")
+        elif not str(args["selector"].__class__).startswith("<class 'fitness_selectors"):
+            raise ValueError("Selector must be from fitness_selectors module")
 
 
 

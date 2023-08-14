@@ -1,1 +1,1 @@
-- Implement LGP
+- implement value clipping in LGP
