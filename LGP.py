@@ -158,7 +158,7 @@ class LinearGeneticProgramming():
             operand1 = A[chromosome[i+2]]
             operand2 = A[chromosome[i+3]]
 
-            A[destination] = self.operations[operation](operand1,operand2)
+            A[destination] = self.operations[operation](operand1, operand2, sym=True)
         
         return A[0] # r_0 = output
 
@@ -258,18 +258,18 @@ class LinearGeneticProgramming():
 if __name__ == '__main__':
 
     obj_fun = lambda x,y: ((x-y)**2).mean()
-    operation_names = ["addition","subtraction","multiplication","division","square","sin","cos"]
+    operation_names = ["addition","subtraction","multiplication","square"]
 
-    n_points = 50
+    n_points = 100
     x_data = np.linspace(0,30,n_points)
-    y_data = np.cos(x_data) + 2*np.sin(x_data)
+    y_data = 2*x_data**2 + 3
 
     LGP = LinearGeneticProgramming(
         object_fn=obj_fun,
         operation_names=operation_names,
         N=100,
         initial_chromosome_length=16,
-        n_registers=4,
+        n_registers=3,
         C=[1.0,2.0,3.0,-1.0],
         selector=fitness_selectors.TournamentSelection(tournament_prob=0.75, tournament_size=10),
         p_c=0.8,
@@ -280,16 +280,15 @@ if __name__ == '__main__':
     )
 
     LGP.fit(600, x_data, y_data)
-    print(LGP.best_chromosome)
-    print(len(LGP.best_chromosome))
-
+    print(f"L_c = {len(LGP.best_chromosome)}, chromosome: {LGP.best_chromosome}")
     y_predict = LGP.predict_best_chromosome()
     print(f"Final loss = {LGP.object_fn(y_data,y_predict):.4f}")
-    expre = LGP.decode_function()
-    print(sympy.expand(expre))
+    expression = LGP.decode_function()
+    print(sympy.expand(expression))
 
-    plt.plot(x_data,y_data,"b")
-    plt.plot(x_data,y_predict,"r--")
+    plt.plot(x_data,y_data,"bo-")
+    plt.plot(x_data,y_predict,"ro--")
     plt.legend(["Data","LGP"])
+    plt.title(f"Predicted function: {expression}")
     plt.grid()
     plt.show()
