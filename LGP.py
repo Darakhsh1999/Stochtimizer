@@ -24,7 +24,7 @@ class LinearGeneticProgramming():
         elitism=True
         ):
 
-        #error_check(args=locals(), algorithm="LGP")
+        error_check(args=locals(), algorithm="LGP")
 
         self.object_fn = object_fn # f(x)
         self.operation_names = operation_names

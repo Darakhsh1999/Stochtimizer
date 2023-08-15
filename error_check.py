@@ -1,5 +1,6 @@
 import types
 import numpy as np
+import operations
 
 def error_check(args, algorithm):
     """ Checks the input arguments for error """
@@ -72,14 +73,24 @@ def error_check(args, algorithm):
     elif algorithm == "LGP":
 
 
+        lgp_operations = operations.Operations().operations
+        print("error check operations", lgp_operations)
         if not isinstance(args["object_fn"], types.LambdaType) or not args["object_fn"].__name__ == "<lambda>":
             raise ValueError("object_fn variable must be a lambda function")
-        #elif isinstance(args["ini"]) or args["ini"] % 4 != 0:
-            #raise ValueError("Initial")
-        elif not isinstance(args["n_chromosomes"], int) or args["n_chromosomes"] <= 0:
-            raise ValueError("Population must be a positive integer")
-        elif not isinstance(args["variable_length"], int) or args["variable_length"] <= 0:
-            raise ValueError("variable_length must be a positive integer")
+        elif not isinstance(args["operation_names"],list) or not all([(op in lgp_operations) for op in args["operation_names"]]):
+            raise ValueError("Operation names must be a list with supported operations")
+        elif not isinstance(args["C"],list) or not all([isinstance(c_val,float) for c_val in args["C"]]):
+            raise ValueError("Constant register must be a list with floats")
+        elif not isinstance(args["N"], int) or args["N"] <= 0:
+            raise ValueError("Population N must be a positive integer")
+        elif not isinstance(args["initial_chromosome_length"], int) or args["initial_chromosome_length"] <= 0:
+            raise ValueError("initial_chromosome_length must be a positive integer")
+        elif not isinstance(args["n_registers"], int) or args["n_registers"] <= 0:
+            raise ValueError("n_registers must be a positive integer")
+        elif not isinstance(args["max_length"], int) or args["max_length"] <= 0:
+            raise ValueError("max_length must be a positive integer")
+        elif not isinstance(args["penalty_length"], int) or args["penalty_length"] <= 0:
+            raise ValueError("penalty_length must be a positive integer")
         elif not (0 <= args["p_c"] <= 1.0):
             raise ValueError("p_c must be in range [0,1]")
         elif not isinstance(args["verbatim"], bool):

@@ -3,8 +3,10 @@ import sympy
 
 class Operations():
 
-    def __init__(self, operations):
-        self.operations = operations
+    def __init__(self, operations=None):
+        if operations is None:
+            operations = [x for x in dir(self) if not x.startswith("__")]
+        self.operations = operations 
     
     def get_operations(self):
         return {idx: getattr(self,x) for idx, x in enumerate(self.operations) if x in dir(self)} # k=idx, v=func
