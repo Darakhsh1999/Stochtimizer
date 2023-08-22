@@ -18,6 +18,9 @@ Minimization of objective function $f(x,y) = (x^2+y-11)^2  + (x+y^2-7)^2$. The p
 ![image1](https://i.imgur.com/imquG0K.png)
 
 **ACO example**
+
+Traveling Saleman Problem (TSP) solved using Ant Colony Optimization (ACO).  $n = 30$ randomly generated vertices in the range $(x,y)\in[0,1]\times[0,1]$. $N = 40$ ants (individuals) are used to traverse the graph and the converged solution and shortest found path $D_k = 5.08$ is shown in the figure. Each ant $i$ deposits pheromones along the edges of the graph, with strength inversely proportional to their path distance. The accumulated pheromones for the whole ant colony are stored in a matrix $\tau$. Given a node, ants are more likely to traverse nodes with higher pheromone content. After each epoch the pheromone matrix is updates as $\tau \leftarrow (1-\rho)\tau + \Delta \tau$ where $\rho$ is the evaporation constant and $\Delta \tau$ is the deposited pheromones for the current epoch. 
+
 ![image2](https://i.imgur.com/jidYB7d.png)
 
 **LGP example**
