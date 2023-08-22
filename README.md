@@ -12,7 +12,10 @@ The workflow is inspired from scikit-learn. Create an object instance of the alg
 ---
 
 **GA example**
+![image1](https://i.imgur.com/imquG0K.png)
 
 **ACO example**
+![image2](https://i.imgur.com/jidYB7d.png)
 
 **LGP example**
+![image3](https://i.imgur.com/YIr74AJ.png)
