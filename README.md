@@ -7,11 +7,14 @@ Stochastic Optimization Library with;
 
 ---
 
-The workflow is inspired from scikit-learn. Create an object instance of the algorithmand pass a lambda objective function that you want to minimize. Call .fit() on object to start optimization process. 
+The workflow is inspired from scikit-learn. Create an object instance of the algorithm and pass a lambda objective function that you want to minimize. Call .fit() on object to start optimization process. 
 
 ---
 
 **GA example**
+
+Minimization of objective function f(x,y) = (x^2+y-11)^2  + (x+y^2-7)^2. The population consists of 100 binary chromosomes (genes $\in$ {0,1}) with length 16. The first 8 genes are decoded into the x-variable and the remaining 8 for the y-variable, thus each chromosomes defines a point in 2D space. The fitness score for each individual (chromosome) is inverse proportional to their objective function evaluation f(x_i,y_i). The next generation is generated through stochastic mating between individual where more fit indiviuals have higher probability to pass their genome.
+
 ![image1](https://i.imgur.com/imquG0K.png)
 
 **ACO example**
